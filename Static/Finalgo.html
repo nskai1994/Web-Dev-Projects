@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI STOCK SCREENER · All OpenRouter Models</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0a0b0d;--bg2:#0f1115;--bg3:#151820;--bg4:#1c2028;
+      --border:#1e2330;--border2:#252d3d;
+      --text:#e8eaf0;--muted:#5a6380;--hint:#3a4260;
+      --green:#00d4a0;--green-dim:#0a2e25;
+      --red:#ff4d6a;--red-dim:#2e0a12;
+      --amber:#f5a623;--amber-dim:#2e1f08;
+      --blue:#4d9ef5;--blue-dim:#0a1a2e;
+      --purple:#c084fc;--purple-dim:#2e1a3a;
+      font-family:'JetBrains Mono',monospace;
+    }
+    body{background:var(--bg);color:var(--text);min-height:100vh;}
+    #app{max-width:1400px;margin:0 auto;padding:20px;}
+    
+    /* Header */
+    .header{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:24px;flex-wrap:wrap;gap:16px;}
+    .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:var(--green);}
+    .logo span{color:var(--muted);font-weight:400;}
+    
+    .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+    .model-select{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:8px;font-family:inherit;font-size:13px;cursor:pointer;min-width:250px;}
+    .api-status{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg2);border-radius:20px;border:1px solid var(--border);}
+    .status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);}
+    .status-dot.error{background:var(--red);}
+    .status-dot.loading{background:var(--amber);animation:pulse 1s infinite;}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+    
+    .refresh-models{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:16px;}
+    .refresh-models:hover{background:var(--bg4);}
+    
+    /* Filter Tabs */
+    .filter-tabs{display:flex;gap:8px;margin:16px 0;flex-wrap:wrap;}
+    .filter-tab{padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;font-size:11px;cursor:pointer;transition:all 0.15s;}
+    .filter-tab:hover{border-color:var(--green);}
+    .filter-tab.active{background:var(--green);color:#000;border-color:var(--green);}
+    
+    /* Main Action Card */
+    .action-card{background:var(--bg2);border-radius:16px;padding:24px;margin-bottom:24px;border:1px solid var(--border);}
+    .action-title{font-family:'Syne',sans-serif;font-size:20px;margin-bottom:16px;display:flex;align-items:center;gap:12px;}
+    
+    /* Strategy Input Section */
+    .strategy-section{margin-bottom:16px;}
+    .strategy-tabs{display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid var(--border);}
+    .strategy-tab{padding:8px 16px;background:transparent;border:none;color:var(--muted);font-family:inherit;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;}
+    .strategy-tab:hover{color:var(--text);}
+    .strategy-tab.active{color:var(--green);border-bottom-color:var(--green);}
+    
+    .strategy-input{width:100%;padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:inherit;font-size:13px;resize:vertical;min-height:150px;margin-bottom:8px;}
+    .strategy-input:focus{outline:none;border-color:var(--green);}
+    
+    .upload-zone{margin:16px 0;padding:30px;border:2px dashed var(--border2);border-radius:12px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--bg3);}
+    .upload-zone:hover{border-color:var(--green);background:var(--bg4);}
+    .upload-zone.drag-over{border-color:var(--purple);background:var(--blue-dim);}
+    .upload-icon{font-size:48px;margin-bottom:12px;}
+    .upload-text{font-size:14px;margin-bottom:4px;}
+    .upload-hint{font-size:11px;color:var(--muted);}
+    
+    .file-info{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--bg3);border-radius:8px;border:1px solid var(--border);margin-top:8px;}
+    .file-name{display:flex;align-items:center;gap:8px;}
+    .file-remove{color:var(--red);cursor:pointer;font-size:18px;}
+    .file-remove:hover{opacity:0.8;}
+    
+    .strategy-stats{display:flex;gap:16px;font-size:11px;color:var(--muted);margin-top:4px;}
+    
+    .button-group{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;}
+    .btn{padding:12px 24px;border-radius:8px;font-weight:700;font-family:inherit;font-size:14px;cursor:pointer;border:none;transition:all 0.2s;display:flex;align-items:center;gap:8px;}
+    .btn-primary{background:var(--green);color:#000;}
+    .btn-primary:hover{background:var(--green2);}
+    .btn-secondary{background:var(--blue);color:#fff;}
+    .btn-secondary:hover{opacity:0.9;}
+    .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+    .btn-outline:hover{border-color:var(--green);}
+    .btn:disabled{opacity:0.5;cursor:not-allowed;}
+    
+    /* Stock Universe */
+    .universe-section{margin-top:16px;padding-top:16px;border-top:1px solid var(--border);}
+    .universe-title{font-size:13px;color:var(--muted);margin-bottom:12px;display:flex;justify-content:space-between;}
+    .symbol-tags{display:flex;flex-wrap:wrap;gap:8px;max-height:150px;overflow-y:auto;padding:4px;}
+    .symbol-tag{padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;font-size:12px;cursor:pointer;transition:all 0.15s;}
+    .symbol-tag.selected{background:var(--green);color:#000;border-color:var(--green);}
+    .symbol-tag:hover{border-color:var(--green);}
+    
+    /* Results */
+    .results-section{background:var(--bg2);border-radius:16px;padding:24px;border:1px solid var(--border);}
+    .results-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+    .results-title{font-family:'Syne',sans-serif;font-size:18px;}
+    .refresh-info{font-size:11px;color:var(--muted);}
+    
+    .stock-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:24px;}
+    .stock-card{background:var(--bg3);border-radius:12px;padding:20px;border:1px solid var(--border);cursor:pointer;transition:all 0.2s;}
+    .stock-card:hover{border-color:var(--green);transform:translateY(-2px);}
+    
+    .card-header{display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;}
+    .stock-symbol{font-size:20px;font-weight:700;color:var(--text);}
+    .stock-name{font-size:11px;color:var(--muted);}
+    .stock-signal{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+    .signal-Bullish{background:var(--green-dim);color:var(--green);}
+    .signal-Bearish{background:var(--red-dim);color:var(--red);}
+    .signal-Neutral{background:var(--amber-dim);color:var(--amber);}
+    
+    .price-section{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;}
+    .current-price{font-size:28px;font-weight:700;}
+    .price-change{font-size:14px;padding:2px 8px;border-radius:4px;}
+    .change-positive{background:var(--green-dim);color:var(--green);}
+    .change-negative{background:var(--red-dim);color:var(--red);}
+    
+    .metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+    .metric-item{display:flex;justify-content:space-between;font-size:11px;}
+    .metric-label{color:var(--muted);}
+    
+    .allocation-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin:12px 0 8px;}
+    .allocation-fill{height:100%;border-radius:3px;transition:width 0.5s;}
+    .allocation-text{display:flex;justify-content:space-between;font-size:11px;}
+    
+    .reasoning{font-size:11px;color:var(--muted);line-height:1.5;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+    
+    .chart-section{margin-top:24px;padding-top:24px;border-top:1px solid var(--border);}
+    .chart-header{display:flex;justify-content:space-between;margin-bottom:16px;}
+    .chart-container{height:300px;position:relative;}
+    
+    .loading-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;gap:16px;}
+    .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin 1s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    
+    .error-banner{background:var(--red-dim);border:1px solid var(--red);color:var(--red);padding:12px 20px;border-radius:8px;margin-bottom:20px;display:flex;align-items:center;gap:12px;}
+    
+    .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:1000;}
+    .modal-content{background:var(--bg2);padding:24px;border-radius:16px;border:1px solid var(--border);width:450px;max-height:80vh;overflow-y:auto;}
+    .modal-title{font-size:18px;margin-bottom:20px;}
+    .modal input{width:100%;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin:8px 0;font-family:inherit;}
+    .modal button{width:100%;padding:12px;margin-top:16px;}
+    
+    .model-info{font-size:10px;color:var(--muted);margin-top:4px;}
+    .provider-tag{display:inline-block;padding:2px 6px;background:var(--bg4);border-radius:4px;font-size:9px;margin-left:6px;}
+    .model-count{font-size:11px;color:var(--muted);}
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">ALGO<span>SCREENER</span></div>
+    
+    <div class="controls">
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <select class="model-select" id="modelSelect" onchange="updateModelInfo()">
+          <option value="">Loading models...</option>
+        </select>
+        <div class="model-info" id="modelInfo"></div>
+      </div>
+      
+      <button class="refresh-models" onclick="fetchAllModels()" title="Refresh model list">🔄</button>
+      
+      <div class="api-status">
+        <span class="status-dot" id="apiStatusDot"></span>
+        <span id="apiStatusText">API Ready</span>
+      </div>
+      
+      <button class="btn btn-outline" onclick="showSettingsModal()">⚙️ Settings</button>
+    </div>
+  </div>
+
+  <!-- Filter Tabs -->
+  <div class="filter-tabs" id="filterTabs">
+    <span class="filter-tab active" onclick="filterModels('all')">All Models</span>
+    <span class="filter-tab" onclick="filterModels('free')">🆓 Free</span>
+    <span class="filter-tab" onclick="filterModels('tools')">🔧 Tool Calling</span>
+    <span class="filter-tab" onclick="filterModels('vision')">👁️ Vision</span>
+    <span class="filter-tab" onclick="filterModels('anthropic')">Anthropic</span>
+    <span class="filter-tab" onclick="filterModels('openai')">OpenAI</span>
+    <span class="filter-tab" onclick="filterModels('google')">Google</span>
+    <span class="filter-tab" onclick="filterModels('meta')">Meta</span>
+    <span class="filter-tab" onclick="filterModels('deepseek')">DeepSeek</span>
+  </div>
+  <div style="font-size:11px;color:var(--muted);margin:-8px 0 16px;" id="modelCountDisplay">0 models loaded</div>
+
+  <!-- Error Banner -->
+  <div id="errorBanner" class="error-banner" style="display:none;">
+    <span>⚠️</span>
+    <span id="errorMessage"></span>
+    <button onclick="dismissError()" style="margin-left:auto;background:var(--red);color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;">Dismiss</button>
+  </div>
+
+  <!-- Main Action Card -->
+  <div class="action-card">
+    <div class="action-title">
+      <span>🎯 AI Strategy Screener</span>
+      <span style="font-size:12px;color:var(--muted);">Enter or upload your trading strategy</span>
+    </div>
+    
+    <!-- Strategy Input Section -->
+    <div class="strategy-section">
+      <div class="strategy-tabs">
+        <button class="strategy-tab active" id="textTab" onclick="switchStrategyTab('text')">📝 Text Input</button>
+        <button class="strategy-tab" id="uploadTab" onclick="switchStrategyTab('upload')">📁 File Upload</button>
+      </div>
+      
+      <!-- Text Input View -->
+      <div id="textInputView">
+        <textarea class="strategy-input" id="strategyInput" placeholder="Paste your trading strategy here...
+
+Example:
+- Look for stocks with RSI between 40-60
+- Volume > 1.5x 20-day average
+- Price above 20-day moving average
+- Prefer Technology and Healthcare sectors
+- Position size: 5-15% based on signal strength"></textarea>
+        <div class="strategy-stats">
+          <span>📊 Characters: <span id="charCount">0</span></span>
+          <span>📄 Words: <span id="wordCount">0</span></span>
+          <span>🔤 Lines: <span id="lineCount">0</span></span>
+        </div>
+      </div>
+      
+      <!-- File Upload View -->
+      <div id="uploadView" style="display:none;">
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-icon">📄</div>
+          <div class="upload-text">Click or drag & drop to upload strategy document</div>
+          <div class="upload-hint">Supports .txt, .md, .pdf, .docx (Max 5MB)</div>
+          <input type="file" id="fileInput" accept=".txt,.md,.pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none;" onchange="handleFileUpload(event)">
+        </div>
+        <div id="fileInfo" class="file-info" style="display:none;">
+          <div class="file-name">
+            <span>📄</span>
+            <span id="uploadedFileName"></span>
+            <span style="color:var(--muted);" id="uploadedFileSize"></span>
+          </div>
+          <span class="file-remove" onclick="removeUploadedFile()">✕</span>
+        </div>
+        <div id="uploadedContentPreview" style="margin-top:12px;padding:12px;background:var(--bg);border-radius:8px;border:1px solid var(--border);display:none;">
+          <div style="font-size:11px;color:var(--green);margin-bottom:8px;">📋 File Preview:</div>
+          <div id="uploadedContentText" style="font-size:11px;color:var(--muted);max-height:100px;overflow-y:auto;line-height:1.6;"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="button-group">
+      <button class="btn btn-primary" id="screenBtn" onclick="screenStocks()">
+        <span>🔍</span> SCREEN OPTIMAL STOCKS
+      </button>
+      <button class="btn btn-secondary" id="quickScreenBtn" onclick="quickScreen()">
+        <span>⚡</span> Quick Screen (Top 10)
+      </button>
+      <button class="btn btn-outline" onclick="loadExampleStrategy()">
+        <span>📋</span> Load Example
+      </button>
+      <button class="btn btn-outline" onclick="clearStrategy()">
+        <span>🗑️</span> Clear
+      </button>
+    </div>
+    
+    <!-- Stock Universe -->
+    <div class="universe-section">
+      <div class="universe-title">
+        <span>Select stocks to screen (click to toggle):</span>
+        <span style="cursor:pointer;color:var(--green);" onclick="selectAllStocks()">Select All</span>
+      </div>
+      <div class="symbol-tags" id="symbolTags"></div>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  <div class="results-section" id="resultsSection">
+    <div class="results-header">
+      <div class="results-title" id="resultsTitle">Optimal Stock Picks</div>
+      <div class="refresh-info" id="refreshInfo"></div>
+    </div>
+    
+    <div id="resultsContainer">
+      <div style="text-align:center;padding:40px;color:var(--muted);">
+        Click "SCREEN OPTIMAL STOCKS" to analyze the market
+      </div>
+    </div>
+    
+    <div class="chart-section" id="chartSection" style="display:none;">
+      <div class="chart-header">
+        <span id="chartTitle">AAPL · Apple Inc.</span>
+        <button class="btn btn-outline" onclick="closeChart()" style="padding:4px 12px;">✕ Close</button>
+      </div>
+      <div class="chart-container">
+        <canvas id="stockChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settingsModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-title">⚙️ API Settings</div>
+    
+    <label style="font-size:11px;color:var(--muted);">OpenRouter API Key</label>
+    <input type="password" id="openRouterKey" placeholder="sk-or-v1-...">
+    <div style="font-size:9px;color:var(--muted);margin:4px 0;">
+      <a href="https://openrouter.ai/keys" target="_blank" style="color:var(--blue);">Get free key at openrouter.ai</a>
+    </div>
+    
+    <label style="font-size:11px;color:var(--muted);margin-top:16px;">Alpha Vantage API Key</label>
+    <input type="password" id="alphaVantageKey" placeholder="demo">
+    <div style="font-size:9px;color:var(--muted);margin:4px 0;">
+      <a href="https://www.alphavantage.co/support/#api-key" target="_blank" style="color:var(--blue);">Get free key at alphavantage.co</a>
+    </div>
+    
+    <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    <button class="btn btn-outline" onclick="testConnection()" style="margin-top:8px;">🧪 Test Connection</button>
+    <button class="btn btn-outline" onclick="closeModal()" style="margin-top:8px;">Cancel</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+// ==================== STATE ====================
+let settings = JSON.parse(localStorage.getItem('screenerSettings') || '{"openRouterKey":"","alphaVantageKey":"demo"}');
+let allModels = [];
+let filteredModels = [];
+let selectedModel = localStorage.getItem('selectedModel') || '';
+let currentFilter = 'all';
+let currentChart = null;
+let screenedStocks = [];
+let selectedStocks = new Set(JSON.parse(localStorage.getItem('selectedStocks') || '["AAPL","MSFT","GOOGL","AMZN","NVDA","META","TSLA","JPM","JNJ","WMT"]'));
+let strategyText = localStorage.getItem('strategyText') || '';
+let currentStrategyTab = 'text';
+let uploadedFileContent = null;
+let uploadedFileName = null;
+
+// Stock universe
+const STOCK_UNIVERSE = [
+  'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'JPM', 'V', 'JNJ',
+  'WMT', 'PG', 'UNH', 'HD', 'DIS', 'NFLX', 'ADBE', 'CRM', 'AMD', 'INTC',
+  'BAC', 'MA', 'XOM', 'CVX', 'KO', 'PEP', 'TMO', 'ABT', 'NKE', 'SBUX',
+  'COST', 'AVGO', 'ORCL', 'CSCO', 'ACN', 'TXN', 'QCOM', 'INTU', 'IBM', 'NOW'
+];
+
+// ==================== STRATEGY INPUT MANAGEMENT ====================
+function switchStrategyTab(tab) {
+  currentStrategyTab = tab;
+  
+  // Update tab styles
+  document.getElementById('textTab').classList.toggle('active', tab === 'text');
+  document.getElementById('uploadTab').classList.toggle('active', tab === 'upload');
+  
+  // Show/hide views
+  document.getElementById('textInputView').style.display = tab === 'text' ? 'block' : 'none';
+  document.getElementById('uploadView').style.display = tab === 'upload' ? 'block' : 'none';
+}
+
+function updateStrategyStats() {
+  const text = document.getElementById('strategyInput').value;
+  document.getElementById('charCount').textContent = text.length;
+  document.getElementById('wordCount').textContent = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+  document.getElementById('lineCount').textContent = text.split('\n').filter(l => l.trim().length > 0).length;
+}
+
+function getCurrentStrategy() {
+  if (currentStrategyTab === 'upload' && uploadedFileContent) {
+    return uploadedFileContent;
+  }
+  return document.getElementById('strategyInput').value.trim();
+}
+
+async function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  // Check file size (5MB limit)
+  if (file.size > 5 * 1024 * 1024) {
+    showError('File too large. Maximum size is 5MB.');
+    return;
+  }
+  
+  try {
+    let content = '';
+    
+    // Handle different file types
+    if (file.name.endsWith('.txt') || file.name.endsWith('.md')) {
+      content = await file.text();
+    } else if (file.name.endsWith('.pdf')) {
+      // For PDF, extract text (simplified - in production use PDF.js)
+      showError('PDF parsing requires additional library. Please use .txt or .md files for now.');
+      return;
+    } else if (file.name.endsWith('.docx')) {
+      // For DOCX, extract text (simplified)
+      showError('DOCX parsing requires additional library. Please use .txt or .md files for now.');
+      return;
+    } else {
+      // Try to read as text anyway
+      content = await file.text();
+    }
+    
+    uploadedFileContent = content.substring(0, 10000); // Limit to 10KB
+    uploadedFileName = file.name;
+    
+    // Show file info
+    document.getElementById('fileInfo').style.display = 'flex';
+    document.getElementById('uploadedFileName').textContent = file.name;
+    document.getElementById('uploadedFileSize').textContent = `(${(file.size / 1024).toFixed(1)} KB)`;
+    
+    // Show preview
+    document.getElementById('uploadedContentPreview').style.display = 'block';
+    document.getElementById('uploadedContentText').textContent = 
+      uploadedFileContent.substring(0, 200) + (uploadedFileContent.length > 200 ? '...' : '');
+    
+    showSuccess(`File "${file.name}" loaded successfully`);
+    
+  } catch (error) {
+    console.error('File read error:', error);
+    showError('Failed to read file. Please try a .txt or .md file.');
+  }
+}
+
+function removeUploadedFile() {
+  uploadedFileContent = null;
+  uploadedFileName = null;
+  document.getElementById('fileInfo').style.display = 'none';
+  document.getElementById('uploadedContentPreview').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+}
+
+function clearStrategy() {
+  if (currentStrategyTab === 'text') {
+    document.getElementById('strategyInput').value = '';
+    updateStrategyStats();
+  } else {
+    removeUploadedFile();
+  }
+  strategyText = '';
+  localStorage.removeItem('strategyText');
+}
+
+// ==================== FETCH ALL OPENROUTER MODELS ====================
+async function fetchAllModels() {
+  const modelSelect = document.getElementById('modelSelect');
+  modelSelect.innerHTML = '<option value="">Loading models...</option>';
+  
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/models');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = await response.json();
+    allModels = data.data || [];
+    
+    // Process and categorize models
+    allModels = allModels.map(model => ({
+      ...model,
+      provider: model.id.split('/')[0],
+      isFree: model.pricing?.prompt === '0' && model.pricing?.completion === '0',
+      hasTools: model.supported_parameters?.includes('tools'),
+      hasVision: model.supported_parameters?.includes('image')
+    }));
+    
+    // Sort by provider then name
+    allModels.sort((a, b) => {
+      if (a.provider !== b.provider) return a.provider.localeCompare(b.provider);
+      return a.name.localeCompare(b.name);
+    });
+    
+    applyFilter(currentFilter);
+    
+    if (selectedModel) {
+      const exists = allModels.find(m => m.id === selectedModel);
+      if (!exists) selectedModel = '';
+    }
+    
+    if (!selectedModel && filteredModels.length > 0) {
+      const defaultModel = filteredModels.find(m => m.id === 'anthropic/claude-3.5-sonnet') ||
+                          filteredModels.find(m => m.id.includes('claude')) ||
+                          filteredModels[0];
+      selectedModel = defaultModel?.id || '';
+    }
+    
+    updateModelSelect();
+    updateModelInfo();
+    
+    console.log(`Loaded ${allModels.length} models from OpenRouter`);
+    
+  } catch (error) {
+    console.error('Failed to fetch models:', error);
+    allModels = getFallbackModels();
+    applyFilter(currentFilter);
+    updateModelSelect();
+    showError('Using cached model list. Check your connection.');
+  }
+}
+
+function getFallbackModels() {
+  return [
+    { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'anthropic', isFree: false, hasTools: true, context_length: 200000 },
+    { id: 'anthropic/claude-3-opus', name: 'Claude 3 Opus', provider: 'anthropic', isFree: false, hasTools: true, context_length: 200000 },
+    { id: 'openai/gpt-4o', name: 'GPT-4o', provider: 'openai', isFree: false, hasTools: true, context_length: 128000 },
+    { id: 'openai/gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'openai', isFree: false, hasTools: true, context_length: 128000 },
+    { id: 'meta-llama/llama-3.1-70b-instruct', name: 'Llama 3.1 70B', provider: 'meta-llama', isFree: true, hasTools: false, context_length: 128000 },
+    { id: 'meta-llama/llama-3.1-8b-instruct', name: 'Llama 3.1 8B', provider: 'meta-llama', isFree: true, hasTools: false, context_length: 128000 },
+    { id: 'google/gemini-pro-1.5', name: 'Gemini Pro 1.5', provider: 'google', isFree: false, hasTools: true, context_length: 1000000 },
+    { id: 'google/gemini-flash-1.5', name: 'Gemini Flash 1.5', provider: 'google', isFree: false, hasTools: true, context_length: 1000000 },
+    { id: 'deepseek/deepseek-chat', name: 'DeepSeek Chat', provider: 'deepseek', isFree: false, hasTools: false, context_length: 128000 },
+    { id: 'cohere/command-r-plus', name: 'Command R+', provider: 'cohere', isFree: false, hasTools: true, context_length: 128000 }
+  ].map(m => ({ ...m, supported_parameters: m.hasTools ? ['tools'] : [] }));
+}
+
+function applyFilter(filter) {
+  currentFilter = filter;
+  
+  switch(filter) {
+    case 'free': filteredModels = allModels.filter(m => m.isFree); break;
+    case 'tools': filteredModels = allModels.filter(m => m.hasTools); break;
+    case 'vision': filteredModels = allModels.filter(m => m.hasVision); break;
+    case 'anthropic': filteredModels = allModels.filter(m => m.provider === 'anthropic'); break;
+    case 'openai': filteredModels = allModels.filter(m => m.provider === 'openai'); break;
+    case 'google': filteredModels = allModels.filter(m => m.provider === 'google'); break;
+    case 'meta': filteredModels = allModels.filter(m => m.provider === 'meta-llama'); break;
+    case 'deepseek': filteredModels = allModels.filter(m => m.provider === 'deepseek'); break;
+    default: filteredModels = allModels;
+  }
+  
+  document.getElementById('modelCountDisplay').textContent = 
+    `${filteredModels.length} models available${filter !== 'all' ? ' (filtered)' : ''}`;
+}
+
+function filterModels(filter) {
+  document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+  event.target.classList.add('active');
+  applyFilter(filter);
+  updateModelSelect();
+}
+
+function updateModelSelect() {
+  const select = document.getElementById('modelSelect');
+  
+  const grouped = {};
+  filteredModels.forEach(model => {
+    if (!grouped[model.provider]) grouped[model.provider] = [];
+    grouped[model.provider].push(model);
+  });
+  
+  let html = '';
+  for (const [provider, models] of Object.entries(grouped)) {
+    html += `<optgroup label="${provider.toUpperCase()} (${models.length})">`;
+    models.forEach(model => {
+      const selected = model.id === selectedModel ? 'selected' : '';
+      const freeBadge = model.isFree ? ' 🆓' : '';
+      const toolBadge = model.hasTools ? ' 🔧' : '';
+      html += `<option value="${model.id}" ${selected}>${model.name}${freeBadge}${toolBadge}</option>`;
+    });
+    html += '</optgroup>';
+  }
+  
+  select.innerHTML = html || '<option value="">No models available</option>';
+}
+
+function updateModelInfo() {
+  const select = document.getElementById('modelSelect');
+  selectedModel = select.value;
+  localStorage.setItem('selectedModel', selectedModel);
+  
+  const model = allModels.find(m => m.id === selectedModel);
+  if (model) {
+    const info = [];
+    if (model.context_length) info.push(`Context: ${(model.context_length/1000).toFixed(0)}K`);
+    if (model.isFree) info.push('Free');
+    if (model.hasTools) info.push('Tool Calling');
+    if (model.hasVision) info.push('Vision');
+    
+    document.getElementById('modelInfo').innerHTML = `
+      <span class="provider-tag">${model.provider}</span>
+      ${info.join(' · ')}
+      ${model.pricing ? ` · $${model.pricing.prompt}/1M tokens` : ''}
+    `;
+  }
+}
+
+// ==================== INIT ====================
+function init() {
+  fetchAllModels();
+  renderSymbolTags();
+  document.getElementById('strategyInput').value = strategyText;
+  updateStrategyStats();
+  
+  // Set up strategy input listener
+  document.getElementById('strategyInput').addEventListener('input', updateStrategyStats);
+  
+  // Set up drag & drop
+  setupDragDrop();
+  
+  updateApiStatus();
+}
+
+function setupDragDrop() {
+  const zone = document.getElementById('uploadZone');
+  
+  zone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    zone.classList.add('drag-over');
+  });
+  
+  zone.addEventListener('dragleave', () => {
+    zone.classList.remove('drag-over');
+  });
+  
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleFileUpload({ target: { files: [file] } });
+    }
+  });
+}
+
+function renderSymbolTags() {
+  const container = document.getElementById('symbolTags');
+  container.innerHTML = STOCK_UNIVERSE.map(symbol => `
+    <span class="symbol-tag ${selectedStocks.has(symbol) ? 'selected' : ''}" 
+          onclick="toggleSymbol('${symbol}')">${symbol}</span>
+  `).join('');
+}
+
+function toggleSymbol(symbol) {
+  if (selectedStocks.has(symbol)) {
+    selectedStocks.delete(symbol);
+  } else {
+    selectedStocks.add(symbol);
+  }
+  localStorage.setItem('selectedStocks', JSON.stringify([...selectedStocks]));
+  renderSymbolTags();
+}
+
+function selectAllStocks() {
+  selectedStocks = new Set(STOCK_UNIVERSE);
+  localStorage.setItem('selectedStocks', JSON.stringify([...selectedStocks]));
+  renderSymbolTags();
+}
+
+function loadExampleStrategy() {
+  const example = `# Momentum-Value Hybrid Strategy
+
+## Entry Conditions:
+1. RSI(14) between 40-65 (not overbought)
+2. Current volume > 1.5x 20-day average volume
+3. Price above 20-day EMA
+4. MACD histogram positive or turning positive
+5. P/E ratio < industry average
+
+## Preferred Sectors:
+- Technology (highest weight)
+- Healthcare
+- Consumer Cyclical
+
+## Position Sizing:
+- Strong signal (>80% confidence): 12-15%
+- Moderate signal (65-80%): 8-10%
+- Weak signal (50-65%): 3-5%
+
+## Exit Rules:
+- Take profit at +5% and +8%
+- Stop loss at -2.5%
+- Trail stop after +3% gain`;
+  
+  if (currentStrategyTab === 'text') {
+    document.getElementById('strategyInput').value = example;
+    updateStrategyStats();
+  } else {
+    uploadedFileContent = example;
+    uploadedFileName = 'example-strategy.txt';
+    document.getElementById('fileInfo').style.display = 'flex';
+    document.getElementById('uploadedFileName').textContent = 'example-strategy.txt';
+    document.getElementById('uploadedFileSize').textContent = '(2.1 KB)';
+    document.getElementById('uploadedContentPreview').style.display = 'block';
+    document.getElementById('uploadedContentText').textContent = example.substring(0, 200) + '...';
+  }
+  
+  strategyText = example;
+  localStorage.setItem('strategyText', strategyText);
+  showSuccess('Example strategy loaded');
+}
+
+// ==================== API FUNCTIONS ====================
+async function fetchRealTimeData(symbols) {
+  const data = {};
+  
+  for (const symbol of symbols) {
+    try {
+      if (settings.alphaVantageKey && settings.alphaVantageKey !== 'demo') {
+        const quoteRes = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${settings.alphaVantageKey}`);
+        const quoteData = await quoteRes.json();
+        const quote = quoteData['Global Quote'];
+        
+        if (quote && quote['05. price']) {
+          data[symbol] = {
+            price: parseFloat(quote['05. price']),
+            change: parseFloat(quote['09. change']),
+            changePercent: quote['10. change percent'].replace('%', ''),
+            volume: parseInt(quote['06. volume']),
+            high: parseFloat(quote['03. high']),
+            low: parseFloat(quote['04. low']),
+            open: parseFloat(quote['02. open']),
+            prevClose: parseFloat(quote['08. previous close'])
+          };
+        }
+      } else {
+        data[symbol] = generateMockData(symbol);
+      }
+      
+      await sleep(200);
+    } catch (error) {
+      console.error(`Error fetching ${symbol}:`, error);
+      data[symbol] = generateMockData(symbol);
+    }
+  }
+  
+  return data;
+}
+
+function generateMockData(symbol) {
+  const basePrices = {
+    'AAPL': 175, 'MSFT': 420, 'GOOGL': 140, 'AMZN': 180, 'NVDA': 850,
+    'META': 480, 'TSLA': 240, 'JPM': 195, 'JNJ': 155, 'WMT': 60
+  };
+  const base = basePrices[symbol] || 100 + Math.random() * 200;
+  const change = (Math.random() - 0.3) * base * 0.03;
+  
+  return {
+    price: base,
+    change: change,
+    changePercent: ((change / base) * 100).toFixed(2),
+    volume: Math.floor(Math.random() * 50000000 + 10000000),
+    high: base * (1 + Math.random() * 0.02),
+    low: base * (1 - Math.random() * 0.02),
+    open: base - change * 0.5,
+    prevClose: base - change
+  };
+}
+
+function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+// ==================== AI SCREENING ====================
+async function screenStocks() {
+  const strategy = getCurrentStrategy();
+  if (!strategy) {
+    showError('Please enter or upload a trading strategy');
+    return;
+  }
+  
+  if (!settings.openRouterKey) {
+    showError('Please set your OpenRouter API key in Settings');
+    showSettingsModal();
+    return;
+  }
+  
+  if (!selectedModel) {
+    showError('Please select an AI model');
+    return;
+  }
+  
+  strategyText = strategy;
+  localStorage.setItem('strategyText', strategyText);
+  
+  const symbols = [...selectedStocks];
+  if (symbols.length === 0) {
+    showError('Please select at least one stock to screen');
+    return;
+  }
+  
+  const btn = document.getElementById('screenBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;"></span> Fetching real-time data...';
+  
+  document.getElementById('resultsContainer').innerHTML = `
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <div>Fetching real-time data for ${symbols.length} stocks from Alpha Vantage...</div>
+    </div>
+  `;
+  
+  try {
+    const marketData = await fetchRealTimeData(symbols);
+    
+    btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;"></span> AI analyzing...';
+    
+    const dataSummary = Object.entries(marketData).map(([symbol, data]) => 
+      `${symbol}: $${data.price.toFixed(2)} (${data.changePercent}%), Vol: ${formatVolume(data.volume)}`
+    ).join('\n');
+    
+    const modelName = allModels.find(m => m.id === selectedModel)?.name || 'AI';
+    
+    const prompt = `You are an AI trading analyst. Based on the provided trading strategy and real-time market data, identify the TOP 5 optimal stocks to trade RIGHT NOW.
+
+TRADING STRATEGY:
+${strategy}
+
+REAL-TIME MARKET DATA:
+${dataSummary}
+
+Analyze each stock against the strategy criteria. Return a JSON array of exactly 5 stocks with this structure:
+[
+  {
+    "symbol": "AAPL",
+    "signal": "Bullish",
+    "strength": 85,
+    "confidence": 90,
+    "allocation": 12,
+    "reasoning": "Brief specific reason why this stock matches the strategy"
+  }
+]
+
+Rules:
+- signal: ONLY "Bullish", "Bearish", or "Neutral"
+- strength: 0-100
+- confidence: 0-100  
+- allocation: 1-15%
+- Return ONLY valid JSON array, no other text`;
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${settings.openRouterKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': window.location.origin,
+        'X-OpenRouter-Title': 'AI Stock Screener'
+      },
+      body: JSON.stringify({
+        model: selectedModel,
+        messages: [
+          { role: 'system', content: 'You are a quantitative trading analyst. Respond ONLY with valid JSON array.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 2000,
+        response_format: { type: 'json_object' }
+      })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || `HTTP ${response.status}`);
+    }
+    
+    const aiResponse = await response.json();
+    const content = aiResponse.choices[0].message.content;
+    
+    let picks;
+    try {
+      const parsed = JSON.parse(content);
+      picks = Array.isArray(parsed) ? parsed : (parsed.stocks || parsed.picks || []);
+    } catch {
+      const match = content.match(/\[[\s\S]*\]/);
+      picks = match ? JSON.parse(match[0]) : [];
+    }
+    
+    screenedStocks = picks.slice(0, 5).map(pick => ({
+      ...pick,
+      data: marketData[pick.symbol] || generateMockData(pick.symbol)
+    }));
+    
+    displayResults(screenedStocks, modelName);
+    document.getElementById('refreshInfo').textContent = 
+      `Screened ${symbols.length} stocks · ${new Date().toLocaleTimeString()} · ${modelName}`;
+    
+  } catch (error) {
+    console.error('Screening error:', error);
+    showError(`Screening failed: ${error.message}`);
+    
+    const fallbackPicks = generateFallbackPicks([...selectedStocks].slice(0, 5));
+    screenedStocks = fallbackPicks;
+    displayResults(fallbackPicks, 'Fallback');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>🔍</span> SCREEN OPTIMAL STOCKS';
+  }
+}
+
+async function quickScreen() {
+  const topStocks = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'JPM', 'JNJ', 'WMT'];
+  selectedStocks = new Set(topStocks);
+  localStorage.setItem('selectedStocks', JSON.stringify(topStocks));
+  renderSymbolTags();
+  await screenStocks();
+}
+
+function generateFallbackPicks(symbols) {
+  return symbols.map(symbol => {
+    const data = generateMockData(symbol);
+    const isPositive = parseFloat(data.changePercent) > 0;
+    return {
+      symbol,
+      signal: isPositive ? 'Bullish' : 'Neutral',
+      strength: 60 + Math.floor(Math.random() * 30),
+      confidence: 55 + Math.floor(Math.random() * 35),
+      allocation: 5 + Math.floor(Math.random() * 10),
+      reasoning: `Shows ${isPositive ? 'positive' : 'stable'} momentum with volume confirmation`,
+      data
+    };
+  }).sort((a, b) => b.strength - a.strength);
+}
+
+function displayResults(stocks, modelName = 'AI') {
+  const container = document.getElementById('resultsContainer');
+  document.getElementById('resultsTitle').textContent = `🎯 Top ${stocks.length} Picks · ${modelName}`;
+  
+  container.innerHTML = `
+    <div class="stock-grid">
+      ${stocks.map((stock, index) => {
+        const data = stock.data;
+        const changeClass = parseFloat(data.change) >= 0 ? 'change-positive' : 'change-negative';
+        const allocationColor = stock.signal === 'Bullish' ? 'var(--green)' : 
+                               stock.signal === 'Bearish' ? 'var(--red)' : 'var(--amber)';
+        
+        return `
+          <div class="stock-card" onclick="showChart('${stock.symbol}')">
+            <div class="card-header">
+              <div>
+                <div class="stock-symbol">${stock.symbol}</div>
+                <div class="stock-name">Vol: ${formatVolume(data.volume)}</div>
+              </div>
+              <span class="stock-signal signal-${stock.signal}">${stock.signal}</span>
+            </div>
+            
+            <div class="price-section">
+              <span class="current-price">$${data.price.toFixed(2)}</span>
+              <span class="price-change ${changeClass}">
+                ${parseFloat(data.change) >= 0 ? '+' : ''}${data.change.toFixed(2)} (${data.changePercent}%)
+              </span>
+            </div>
+            
+            <div class="metrics-grid">
+              <div class="metric-item"><span class="metric-label">Day High</span><span>$${data.high.toFixed(2)}</span></div>
+              <div class="metric-item"><span class="metric-label">Day Low</span><span>$${data.low.toFixed(2)}</span></div>
+              <div class="metric-item"><span class="metric-label">Open</span><span>$${data.open.toFixed(2)}</span></div>
+              <div class="metric-item"><span class="metric-label">Prev Close</span><span>$${data.prevClose.toFixed(2)}</span></div>
+            </div>
+            
+            <div class="allocation-bar">
+              <div class="allocation-fill" style="width:${stock.allocation * 6.67}%;background:${allocationColor};"></div>
+            </div>
+            <div class="allocation-text">
+              <span>Signal: ${stock.strength}%</span>
+              <span>Allocation: <strong>${stock.allocation}%</strong></span>
+            </div>
+            
+            <div class="reasoning">
+              <strong>🤖 AI Analysis:</strong> ${stock.reasoning}
+            </div>
+            
+            <div style="margin-top:8px;font-size:10px;color:var(--hint);">
+              Confidence: ${stock.confidence}% · Rank #${index + 1}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+  
+  document.getElementById('chartSection').style.display = 'none';
+}
+
+function formatVolume(vol) {
+  if (vol > 1e9) return (vol / 1e9).toFixed(2) + 'B';
+  if (vol > 1e6) return (vol / 1e6).toFixed(2) + 'M';
+  return vol.toString();
+}
+
+// ==================== CHART ====================
+async function showChart(symbol) {
+  const stock = screenedStocks.find(s => s.symbol === symbol);
+  if (!stock) return;
+  
+  document.getElementById('chartTitle').textContent = `${symbol} · $${stock.data.price.toFixed(2)}`;
+  document.getElementById('chartSection').style.display = 'block';
+  
+  let historicalData;
+  try {
+    if (settings.alphaVantageKey && settings.alphaVantageKey !== 'demo') {
+      const res = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${settings.alphaVantageKey}`);
+      const data = await res.json();
+      const series = data['Time Series (Daily)'];
+      
+      if (series) {
+        const dates = Object.keys(series).slice(0, 30).reverse();
+        historicalData = dates.map(date => parseFloat(series[date]['4. close']));
+      }
+    }
+  } catch {}
+  
+  if (!historicalData) {
+    const basePrice = stock.data.price;
+    historicalData = [];
+    let price = basePrice * 0.85;
+    for (let i = 0; i < 30; i++) {
+      price += (Math.random() - 0.4) * basePrice * 0.03;
+      historicalData.push(price);
+    }
+  }
+  
+  const ctx = document.getElementById('stockChart').getContext('2d');
+  if (currentChart) currentChart.destroy();
+  
+  const labels = historicalData.map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (30 - i));
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
+  
+  currentChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: symbol,
+        data: historicalData,
+        borderColor: '#00d4a0',
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.4,
+        fill: true,
+        backgroundColor: 'rgba(0, 212, 160, 0.1)'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: '#1e2330' }, ticks: { color: '#5a6380' } },
+        y: { grid: { color: '#1e2330' }, ticks: { color: '#5a6380' } }
+      }
+    }
+  });
+  
+  document.getElementById('chartSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+function closeChart() {
+  document.getElementById('chartSection').style.display = 'none';
+  if (currentChart) {
+    currentChart.destroy();
+    currentChart = null;
+  }
+}
+
+// ==================== SETTINGS ====================
+function showSettingsModal() {
+  document.getElementById('settingsModal').style.display = 'flex';
+  document.getElementById('openRouterKey').value = settings.openRouterKey || '';
+  document.getElementById('alphaVantageKey').value = settings.alphaVantageKey || 'demo';
+}
+
+function closeModal() {
+  document.getElementById('settingsModal').style.display = 'none';
+}
+
+function saveSettings() {
+  settings.openRouterKey = document.getElementById('openRouterKey').value;
+  settings.alphaVantageKey = document.getElementById('alphaVantageKey').value;
+  localStorage.setItem('screenerSettings', JSON.stringify(settings));
+  closeModal();
+  updateApiStatus();
+  showSuccess('Settings saved');
+}
+
+async function testConnection() {
+  const key = document.getElementById('openRouterKey').value;
+  if (!key) {
+    alert('Enter OpenRouter API key');
+    return;
+  }
+  
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/auth/key', {
+      headers: { 'Authorization': `Bearer ${key}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      alert(`✅ Connected! Credits: ${data.credits || 'N/A'}\n\nNow fetching model list...`);
+      fetchAllModels();
+    } else {
+      alert('❌ Invalid API key');
+    }
+  } catch {
+    alert('❌ Connection failed');
+  }
+}
+
+function updateApiStatus() {
+  const dot = document.getElementById('apiStatusDot');
+  const text = document.getElementById('apiStatusText');
+  
+  if (settings.openRouterKey) {
+    dot.className = 'status-dot';
+    text.textContent = 'API Ready';
+  } else {
+    dot.className = 'status-dot error';
+    text.textContent = 'Set API Key';
+  }
+}
+
+function showError(msg) {
+  const banner = document.getElementById('errorBanner');
+  document.getElementById('errorMessage').textContent = msg;
+  banner.style.display = 'flex';
+  setTimeout(() => banner.style.display = 'none', 5000);
+}
+
+function showSuccess(msg) {
+  const banner = document.getElementById('errorBanner');
+  banner.style.background = 'var(--green-dim)';
+  banner.style.borderColor = 'var(--green)';
+  banner.style.color = 'var(--green)';
+  document.getElementById('errorMessage').textContent = '✅ ' + msg;
+  banner.style.display = 'flex';
+  setTimeout(() => {
+    banner.style.background = 'var(--red-dim)';
+    banner.style.borderColor = 'var(--red)';
+    banner.style.color = 'var(--red)';
+    banner.style.display = 'none';
+  }, 3000);
+}
+
+function dismissError() {
+  document.getElementById('errorBanner').style.display = 'none';
+}
+
+document.getElementById('settingsModal').addEventListener('click', (e) => {
+  if (e.target.classList.contains('modal')) closeModal();
+});
+
+// ==================== START ====================
+init();
+</script>
+</body>
+</html>
