@@ -1,0 +1,1 @@
+{\n  \"buildCommand\": \"npm run build\",\n  \"devCommand\": \"npm run dev\",\n  \"installCommand\": \"npm install\",\n  \"framework\": \"vite\",\n  \"outputDirectory\": \"dist\",\n  \"env\": {\n    \"VITE_APP_NAME\": \"RecFind\"\n  },\n  \"regions\": [\"sfo1\"],\n  \"functions\": {\n    \"api/**/*.js\": {\n      \"memory\": 1024,\n      \"maxDuration\": 60\n    }\n  }\n}\n
