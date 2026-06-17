@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Website Carbon Footprint Analyser</title>
+    <style>
+        /* ===== RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(145deg, #e8f5e9 0%, #c8e6c9 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* ===== MAIN CONTAINER ===== */
+        .app-container {
+            max-width: 960px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(16px);
+            border-radius: 48px;
+            padding: 40px 36px;
+            box-shadow: 0 30px 60px rgba(0, 30, 0, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .header-icon {
+            font-size: 2.8rem;
+            line-height: 1;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1b5e20, #388e3c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .header .badge {
+            background: #1b5e20;
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 4px 16px;
+            border-radius: 30px;
+            letter-spacing: 0.3px;
+            margin-left: auto;
+            -webkit-text-fill-color: #fff;
+        }
+
+        .subtitle {
+            color: #2e5a2e;
+            margin-bottom: 28px;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        /* ===== SEARCH / URL INPUT ===== */
+        .search-section {
+            background: #f5fbf5;
+            border-radius: 32px;
+            padding: 24px 28px;
+            border: 2px solid #d5e8d5;
+            margin-bottom: 24px;
+        }
+
+        .search-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #1e3a2a;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 14px 20px;
+            border: 2px solid #c8dcc8;
+            border-radius: 30px;
+            font-size: 1rem;
+            background: #ffffff;
+            transition: 0.25s;
+            outline: none;
+            min-width: 200px;
+        }
+
+        .search-box input:focus {
+            border-color: #388e3c;
+            box-shadow: 0 0 0 4px rgba(56, 142, 60, 0.15);
+        }
+
+        .search-box input::placeholder {
+            color: #8aa88a;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1b5e20, #388e3c);
+            color: #fff;
+            box-shadow: 0 6px 18px rgba(27, 94, 32, 0.30);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(27, 94, 32, 0.35);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-secondary {
+            background: #e8f0e8;
+            color: #1b5e20;
+            border: 2px solid #b8d0b8;
+        }
+
+        .btn-secondary:hover {
+            background: #d5e8d5;
+            border-color: #388e3c;
+        }
+
+        /* ===== LOADING SPINNER ===== */
+        .spinner {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== RESULTS ===== */
+        .results {
+            background: #f5fbf5;
+            border-radius: 32px;
+            padding: 28px 30px;
+            margin-top: 16px;
+            border: 2px solid #d5e8d5;
+            display: none;
+            animation: fadeSlide 0.5s ease;
+        }
+
+        .results.visible {
+            display: block;
+        }
+
+        @keyframes fadeSlide {
+            0% { opacity: 0; transform: translateY(18px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ---- Result Header ---- */
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .result-header .site-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .result-header .site-info .favicon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: #e8f0e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            border: 1px solid #c8dcc8;
+        }
+
+        .result-header .site-info .site-name {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #1e3a2a;
+        }
+
+        .result-header .site-info .site-url {
+            font-size: 0.85rem;
+            color: #4a7a4a;
+            word-break: break-all;
+        }
+
+        .emission-badge {
+            padding: 8px 24px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .emission-badge.low {
+            background: #c8f0c8;
+            color: #0f4f1a;
+        }
+
+        .emission-badge.medium {
+            background: #fde9b3;
+            color: #7a5f00;
+        }
+
+        .emission-badge.high {
+            background: #fccccc;
+            color: #8f1f1f;
+        }
+
+        /* ---- Main Number ---- */
+        .result-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #1b5e20;
+            margin: 8px 0 6px 0;
+        }
+
+        .result-number span {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #3d6b3d;
+        }
+
+        .result-comparison {
+            color: #4a6a4a;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+
+        .result-comparison strong {
+            color: #1b5e20;
+        }
+
+        /* ---- Breakdown Stats ---- */
+        .result-detail {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 14px;
+            margin: 20px 0 24px 0;
+        }
+
+        .stat-card {
+            background: #ffffffcc;
+            backdrop-filter: blur(4px);
+            padding: 14px 12px;
+            border-radius: 20px;
+            border: 1px solid #d5e8d5;
+            text-align: center;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1b5e20;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.7rem;
+            color: #3d6b3d;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-top: 2px;
+        }
+
+        .stat-card .stat-bar {
+            width: 100%;
+            height: 4px;
+            background: #e8f0e8;
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .stat-card .stat-bar .fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #66bb6a, #388e3c);
+            transition: width 0.8s ease;
+            width: 0%;
+        }
+
+        /* ================================================================ */
+        /* EXPLAINER SECTION */
+        /* ================================================================ */
+        .explainer-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 2px solid #d5e8d5;
+        }
+
+        .explainer-toggle {
+            background: transparent;
+            border: 2px solid #c8dcc8;
+            border-radius: 30px;
+            padding: 10px 24px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #1e3a2a;
+            cursor: pointer;
+            transition: 0.25s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .explainer-toggle:hover {
+            background: #e8f0e8;
+            border-color: #388e3c;
+        }
+
+        .explainer-toggle .arrow {
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+
+        .explainer-toggle .arrow.open {
+            transform: rotate(180deg);
+        }
+
+        .explainer-content {
+            display: none;
+            animation: fadeSlide 0.4s ease;
+            margin-top: 20px;
+        }
+
+        .explainer-content.visible {
+            display: block;
+        }
+
+        .explainer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .explainer-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 20px 24px;
+            border: 1px solid #d5e8d5;
+            box-shadow: 0 2px 8px rgba(0, 20, 0, 0.04);
+        }
+
+        .explainer-card h4 {
+            font-size: 1rem;
+            color: #1e3a2a;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .explainer-card p,
+        .explainer-card li {
+            font-size: 0.9rem;
+            color: #2e5a2e;
+            line-height: 1.6;
+        }
+
+        .explainer-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .explainer-card ul li {
+            padding: 6px 0;
+            border-bottom: 1px solid #f0f5f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .explainer-card ul li:last-child {
+            border-bottom: none;
+        }
+
+        .explainer-card .factor-badge {
+            display: inline-block;
+            background: #e8f0e8;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #1b5e20;
+        }
+
+        .formula-box {
+            background: #f5fbf5;
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            border: 1px solid #d5e8d5;
+            overflow-x: auto;
+        }
+
+        .formula-box .highlight {
+            color: #1b5e20;
+            font-weight: 700;
+        }
+
+        .impact-meter {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 8px 0;
+        }
+
+        .impact-meter .meter-track {
+            flex: 1;
+            height: 8px;
+            background: #e8f0e8;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .impact-meter .meter-track .meter-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        .meter-fill.high-impact {
+            background: #d32f2f;
+        }
+        .meter-fill.medium-impact {
+            background: #f9a825;
+        }
+        .meter-fill.low-impact {
+            background: #388e3c;
+        }
+
+        .explainer-full {
+            grid-column: 1 / -1;
+        }
+
+        /* ================================================================ */
+        /* SUGGESTIONS */
+        /* ================================================================ */
+        .suggestions-section {
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 2px dashed #c8dcc8;
+        }
+
+        .suggestions-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .suggestions-header h3 {
+            font-size: 1.1rem;
+            color: #1e3a2a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .suggestions-header .suggestion-count {
+            font-size: 0.8rem;
+            color: #4a7a4a;
+            background: #e8f0e8;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .suggestion-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 2px solid #c8dcc8;
+            background: transparent;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #2e5a2e;
+        }
+
+        .filter-btn:hover {
+            background: #e8f0e8;
+            border-color: #388e3c;
+        }
+
+        .filter-btn.active {
+            background: #1b5e20;
+            color: #fff;
+            border-color: #1b5e20;
+        }
+
+        .filter-btn.active:hover {
+            background: #2e7d32;
+        }
+
+        .suggestion-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 4px;
+        }
+
+        .suggestion-item {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 16px 20px;
+            border-left: 6px solid #388e3c;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            box-shadow: 0 2px 8px rgba(0, 20, 0, 0.04);
+            transition: all 0.2s ease;
+            cursor: default;
+        }
+
+        .suggestion-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 16px rgba(0, 20, 0, 0.08);
+        }
+
+        .suggestion-item .sug-icon {
+            font-size: 1.4rem;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .suggestion-item .sug-content {
+            flex: 1;
+        }
+
+        .suggestion-item .sug-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #1e3a2a;
+            margin-bottom: 4px;
+        }
+
+        .suggestion-item .sug-description {
+            font-size: 0.9rem;
+            color: #2e5a2e;
+            line-height: 1.5;
+        }
+
+        .suggestion-item .sug-meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .suggestion-item .sug-tag {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 3px 12px;
+            border-radius: 30px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .sug-tag.high-impact {
+            background: #fccccc;
+            color: #8f1f1f;
+        }
+
+        .sug-tag.medium-impact {
+            background: #fde9b3;
+            color: #7a5f00;
+        }
+
+        .sug-tag.low-impact {
+            background: #c8f0c8;
+            color: #0f4f1a;
+        }
+
+        .sug-tag.easy {
+            background: #d5e8d5;
+            color: #1b5e20;
+        }
+
+        .sug-tag.medium-effort {
+            background: #fde9b3;
+            color: #7a5f00;
+        }
+
+        .sug-tag.hard {
+            background: #fccccc;
+            color: #8f1f1f;
+        }
+
+        .sug-tag.category {
+            background: #e3f0e3;
+            color: #1b5e20;
+        }
+
+        .suggestion-item .sug-impact-bar {
+            width: 100%;
+            height: 3px;
+            background: #e8f0e8;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .suggestion-item .sug-impact-bar .impact-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.8s ease;
+        }
+
+        .impact-fill.high {
+            background: #d32f2f;
+        }
+        .impact-fill.medium {
+            background: #f9a825;
+        }
+        .impact-fill.low {
+            background: #388e3c;
+        }
+
+        /* ===== ERROR ===== */
+        .error-msg {
+            background: #fde8e8;
+            border: 2px solid #f5a3a3;
+            color: #7a1f1f;
+            padding: 14px 20px;
+            border-radius: 20px;
+            margin-top: 16px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .error-msg.visible {
+            display: flex;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            text-align: center;
+            margin-top: 28px;
+            font-size: 0.8rem;
+            color: #4a6a4a;
+            border-top: 1px solid #d5e8d5;
+            padding-top: 20px;
+        }
+
+        .footer a {
+            color: #1b5e20;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .explainer-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .app-container { padding: 24px 16px; }
+            .search-section { padding: 18px 16px; }
+            .search-box input { min-width: 140px; }
+            .btn { padding: 12px 20px; font-size: 0.9rem; }
+            .result-number { font-size: 2.2rem; }
+            .header h1 { font-size: 1.5rem; }
+            .header .badge { margin-left: 0; }
+            .result-detail { grid-template-columns: 1fr 1fr; }
+            .suggestions-header { flex-direction: column; align-items: stretch; }
+            .suggestion-filters { justify-content: center; }
+        }
+
+        @media (max-width: 420px) {
+            .result-detail { grid-template-columns: 1fr; }
+            .result-header { flex-direction: column; }
+            .emission-badge { align-self: flex-start; }
+            .suggestion-item { flex-direction: column; }
+        }
+
+        /* ===== ACCESSIBILITY ===== */
+        input:focus-visible,
+        button:focus-visible {
+            outline: 3px solid #388e3c;
+            outline-offset: 2px;
+        }
+
+        /* ===== UTILITY ===== */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================ -->
+    <!-- APP -->
+    <!-- ============================================================ -->
+    <div class="app-container" role="main">
+
+        <!-- HEADER -->
+        <header class="header">
+            <span class="header-icon" aria-hidden="true">🌍</span>
+            <h1>Website Carbon Analyser</h1>
+            <span class="badge">🌱 Ecosia-style</span>
+        </header>
+
+        <p class="subtitle">
+            Enter any website URL to estimate its carbon footprint and get actionable suggestions to reduce it.
+        </p>
+
+        <!-- SEARCH SECTION -->
+        <div class="search-section">
+            <label class="search-label" for="urlInput">
+                🔗 Enter website URL
+            </label>
+            <div class="search-box">
+                <input
+                type="url"
+                id="urlInput"
+                placeholder="https://example.com"
+                value="https://example.com"
+                aria-label="Website URL"
+                />
+                <button class="btn btn-primary" id="analyzeBtn">
+                    <span aria-hidden="true">🔍</span> Analyse
+                </button>
+                <button class="btn btn-secondary" id="resetBtn">
+                    <span aria-hidden="true">⟳</span> Reset
+                </button>
+            </div>
+            <div class="error-msg" id="errorMsg">
+                <span aria-hidden="true">⚠️</span>
+                <span id="errorText">Please enter a valid URL.</span>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- RESULTS -->
+        <!-- ============================================================ -->
+        <section class="results" id="results" aria-live="polite">
+
+            <!-- Header with site info -->
+            <div class="result-header">
+                <div class="site-info">
+                    <div class="favicon" id="faviconDisplay">🌐</div>
+                    <div>
+                        <div class="site-name" id="siteName">Example.com</div>
+                        <div class="site-url" id="siteUrl">https://example.com</div>
+                    </div>
+                </div>
+                <span class="emission-badge" id="categoryBadge">—</span>
+            </div>
+
+            <!-- Main emission number -->
+            <div class="result-number" id="totalEmissions">
+                0 <span>g CO₂ / visit</span>
+            </div>
+
+            <div class="result-comparison" id="comparisonText">
+                🌳 Equivalent to <strong>0</strong> trees absorbing CO₂ for a day.
+            </div>
+
+            <!-- Breakdown stats -->
+            <div class="result-detail" id="breakdown">
+                <div class="stat-card">
+                    <div class="stat-value" id="statData">0</div>
+                    <div class="stat-label">📊 Data Transfer</div>
+                    <div class="stat-bar"><div class="fill" id="barData"></div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statRequests">0</div>
+                    <div class="stat-label">📨 HTTP Requests</div>
+                    <div class="stat-bar"><div class="fill" id="barRequests"></div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statImages">0</div>
+                    <div class="stat-label">🖼️ Images</div>
+                    <div class="stat-bar"><div class="fill" id="barImages"></div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statScripts">0</div>
+                    <div class="stat-label">📜 Scripts</div>
+                    <div class="stat-bar"><div class="fill" id="barScripts"></div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statFonts">0</div>
+                    <div class="stat-label">🔤 Fonts</div>
+                    <div class="stat-bar"><div class="fill" id="barFonts"></div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statThirdParty">0</div>
+                    <div class="stat-label">🔗 Third-party</div>
+                    <div class="stat-bar"><div class="fill" id="barThirdParty"></div></div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- SUGGESTIONS -->
+            <!-- ============================================================ -->
+            <div class="suggestions-section">
+                <div class="suggestions-header">
+                    <h3>
+                        <span aria-hidden="true">💡</span>
+                        Suggestions to Improve
+                        <span class="suggestion-count" id="suggestionCount">0 suggestions</span>
+                    </h3>
+                    <div class="suggestion-filters" id="filterContainer">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="high">🔴 High Impact</button>
+                        <button class="filter-btn" data-filter="medium">🟡 Medium</button>
+                        <button class="filter-btn" data-filter="low">🟢 Low</button>
+                    </div>
+                </div>
+
+                <div class="suggestion-list" id="suggestionList">
+                    <div class="suggestion-item">
+                        <span class="sug-icon" aria-hidden="true">🌱</span>
+                        <div class="sug-content">
+                            <div class="sug-title">Analyse a website to get suggestions</div>
+                            <div class="sug-description">Enter a URL above and click Analyse to receive personalised recommendations.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- EXPLAINER SECTION -->
+            <!-- ============================================================ -->
+            <div class="explainer-section">
+                <button class="explainer-toggle" id="explainerToggle" aria-expanded="false">
+                    <span aria-hidden="true">📖</span>
+                    How is carbon footprint calculated?
+                    <span class="arrow" id="explainerArrow">▼</span>
+                </button>
+
+                <div class="explainer-content" id="explainerContent">
+                    <div class="explainer-grid">
+
+                        <!-- Card 1: What is Carbon Footprint -->
+                        <div class="explainer-card">
+                            <h4>🌿 What is a Website Carbon Footprint?</h4>
+                            <p>
+                                Every time someone visits a website, data is transferred from servers to their device.
+                                This process consumes electricity, which often comes from fossil fuels, producing
+                                <strong>carbon dioxide (CO₂)</strong> emissions.
+                            </p>
+                            <p style="margin-top: 10px;">
+                                The <strong>carbon footprint</strong> of a website is the total CO₂ emissions
+                                generated per visit, measured in <strong>grams of CO₂ equivalent (gCO₂e)</strong>.
+                            </p>
+                            <div style="margin-top: 12px; background: #e8f0e8; border-radius: 12px; padding: 12px; text-align: center;">
+                                <span style="font-weight: 700; font-size: 1.2rem; color: #1b5e20;">
+                                    🌍 Average website: ~1.76g CO₂ per visit
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: How It's Calculated -->
+                        <div class="explainer-card">
+                            <h4>📊 Calculation Methodology</h4>
+                            <p>
+                                Our analyser estimates carbon footprint using a combination of factors:
+                            </p>
+                            <ul style="margin-top: 10px;">
+                                <li>
+                                    <span>📦</span>
+                                    <span><strong>Data Transfer</strong> — Size of all assets loaded</span>
+                                </li>
+                                <li>
+                                    <span>📨</span>
+                                    <span><strong>HTTP Requests</strong> — Number of server requests</span>
+                                </li>
+                                <li>
+                                    <span>🖼️</span>
+                                    <span><strong>Images</strong> — Number and size of images</span>
+                                </li>
+                                <li>
+                                    <span>📜</span>
+                                    <span><strong>Scripts</strong> — JavaScript and CSS files</span>
+                                </li>
+                                <li>
+                                    <span>🔤</span>
+                                    <span><strong>Fonts</strong> — Web fonts loaded</span>
+                                </li>
+                                <li>
+                                    <span>🔗</span>
+                                    <span><strong>Third-party</strong> — External resources (analytics, ads, etc.)</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Card 3: Emission Factors -->
+                        <div class="explainer-card">
+                            <h4>⚡ Emission Factors Used</h4>
+                            <p>
+                                Each factor is multiplied by a <strong>carbon intensity value</strong>
+                                based on global average grid electricity:
+                            </p>
+                            <ul style="margin-top: 10px;">
+                                <li>
+                                    <span>📊</span>
+                                    <span>Data Transfer: <span class="factor-badge">1.5 gCO₂/MB</span></span>
+                                </li>
+                                <li>
+                                    <span>📨</span>
+                                    <span>HTTP Requests: <span class="factor-badge">0.8 gCO₂/100 req</span></span>
+                                </li>
+                                <li>
+                                    <span>🖼️</span>
+                                    <span>Images: <span class="factor-badge">0.5 gCO₂/10 images</span></span>
+                                </li>
+                                <li>
+                                    <span>📜</span>
+                                    <span>Scripts: <span class="factor-badge">0.6 gCO₂/10 scripts</span></span>
+                                </li>
+                                <li>
+                                    <span>🔤</span>
+                                    <span>Fonts: <span class="factor-badge">0.3 gCO₂/10 fonts</span></span>
+                                </li>
+                                <li>
+                                    <span>🔗</span>
+                                    <span>Third-party: <span class="factor-badge">0.7 gCO₂/10 requests</span></span>
+                                </li>
+                            </ul>
+                            <p style="margin-top: 10px; font-size: 0.8rem; color: #5a7a5a;">
+                                <em>Based on data from <a href="https://www.websitecarbon.com/" target="_blank" rel="noopener">Website Carbon</a> and
+                                <a href="https://www.thegreenwebfoundation.org/" target="_blank" rel="noopener">Green Web Foundation</a>.</em>
+                            </p>
+                        </div>
+
+                        <!-- Card 4: Formula -->
+                        <div class="explainer-card">
+                            <h4>🧮 The Formula</h4>
+                            <div class="formula-box">
+                                <strong>Total CO₂ =</strong><br/>
+                                <span class="highlight">(DataMB × 1.5)</span> +<br/>
+                                <span class="highlight">(Requests ÷ 100 × 0.8)</span> +<br/>
+                                <span class="highlight">(Images ÷ 10 × 0.5)</span> +<br/>
+                                <span class="highlight">(Scripts ÷ 10 × 0.6)</span> +<br/>
+                                <span class="highlight">(Fonts ÷ 10 × 0.3)</span> +<br/>
+                                <span class="highlight">(ThirdParty ÷ 10 × 0.7)</span>
+                            </div>
+                            <p style="font-size: 0.85rem; color: #4a6a4a;">
+                                Each component is measured in <strong>grams of CO₂</strong> per visit.
+                            </p>
+                        </div>
+
+                        <!-- Card 5: Tree Equivalence -->
+                        <div class="explainer-card">
+                            <h4>🌳 Tree Equivalence</h4>
+                            <p>
+                                To make the impact more tangible, we convert CO₂ emissions into
+                                <strong>tree equivalence</strong> — how many trees would be needed
+                                to absorb that CO₂ in a day.
+                            </p>
+                            <div class="formula-box" style="margin-top: 10px;">
+                                <strong>1 Tree</strong> absorbs ~20kg CO₂ per year<br/>
+                                = <span class="highlight">~54.8g CO₂ per day</span>
+                            </div>
+                            <div style="margin-top: 12px; background: #e8f0e8; border-radius: 12px; padding: 12px; text-align: center;">
+                                <span style="font-weight: 700; color: #1b5e20;">
+                                    🌳 Trees needed = CO₂ (g) ÷ 54.8
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Card 6: Why It Matters -->
+                        <div class="explainer-card explainer-full">
+                            <h4>🌎 Why This Matters</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div>
+                                    <p style="font-weight: 700; color: #1b5e20;">📊 The Numbers</p>
+                                    <ul>
+                                        <li>🌐 ~4.6 billion internet users worldwide</li>
+                                        <li>⚡ Internet uses ~7% of global electricity</li>
+                                        <li>💨 Digital carbon footprint = ~3.7% of global emissions</li>
+                                        <li>📈 Growing ~6% per year</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <p style="font-weight: 700; color: #1b5e20;">💚 What You Can Do</p>
+                                    <ul>
+                                        <li>✅ Optimise images and assets</li>
+                                        <li>✅ Use green hosting</li>
+                                        <li>✅ Reduce third-party scripts</li>
+                                        <li>✅ Enable caching and compression</li>
+                                        <li>✅ Choose sustainable web design</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div style="margin-top: 12px; background: linear-gradient(135deg, #1b5e20, #388e3c); color: #fff; padding: 14px; border-radius: 16px; text-align: center;">
+                                <strong>💡 Small changes add up!</strong> If every website reduced its footprint by 1g CO₂ per visit,
+                                we could save <strong>millions of tonnes</strong> of CO₂ annually.
+                            </div>
+                        </div>
+
+                    </div><!-- /explainer-grid -->
+                </div><!-- /explainer-content -->
+            </div><!-- /explainer-section -->
+
+        </section>
+
+        <footer class="footer">
+            🌱 Built with ❤️ · Inspired by <a href="https://ecosia.org" target="_blank" rel="noopener">Ecosia</a> · Data is estimated for educational purposes
+        </footer>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- JAVASCRIPT -->
+    <!-- ============================================================ -->
+    <script>
+        (function() {
+            'use strict';
+
+            // ----- DOM refs -----
+            const urlInput = document.getElementById('urlInput');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const errorMsg = document.getElementById('errorMsg');
+            const errorText = document.getElementById('errorText');
+
+            const resultsEl = document.getElementById('results');
+            const faviconDisplay = document.getElementById('faviconDisplay');
+            const siteName = document.getElementById('siteName');
+            const siteUrl = document.getElementById('siteUrl');
+            const categoryBadge = document.getElementById('categoryBadge');
+            const totalEmissionsEl = document.getElementById('totalEmissions');
+            const comparisonText = document.getElementById('comparisonText');
+
+            const statData = document.getElementById('statData');
+            const statRequests = document.getElementById('statRequests');
+            const statImages = document.getElementById('statImages');
+            const statScripts = document.getElementById('statScripts');
+            const statFonts = document.getElementById('statFonts');
+            const statThirdParty = document.getElementById('statThirdParty');
+
+            const barData = document.getElementById('barData');
+            const barRequests = document.getElementById('barRequests');
+            const barImages = document.getElementById('barImages');
+            const barScripts = document.getElementById('barScripts');
+            const barFonts = document.getElementById('barFonts');
+            const barThirdParty = document.getElementById('barThirdParty');
+
+            const suggestionList = document.getElementById('suggestionList');
+            const suggestionCount = document.getElementById('suggestionCount');
+            const filterContainer = document.getElementById('filterContainer');
+
+            const explainerToggle = document.getElementById('explainerToggle');
+            const explainerContent = document.getElementById('explainerContent');
+            const explainerArrow = document.getElementById('explainerArrow');
+
+            let currentSuggestions = [];
+            let currentFilter = 'all';
+
+            // ================================================================
+            // EXPLAINER TOGGLE
+            // ================================================================
+            explainerToggle.addEventListener('click', function() {
+                const isOpen = explainerContent.classList.toggle('visible');
+                explainerToggle.setAttribute('aria-expanded', isOpen);
+                explainerArrow.classList.toggle('open', isOpen);
+                explainerToggle.innerHTML = isOpen ?
+                    '<span aria-hidden="true">📖</span> Hide calculation details <span class="arrow open">▲</span>' :
+                    '<span aria-hidden="true">📖</span> How is carbon footprint calculated? <span class="arrow">▼</span>';
+                // Re-add the arrow reference
+                const newArrow = explainerToggle.querySelector('.arrow');
+                if (newArrow) {
+                    if (isOpen) newArrow.classList.add('open');
+                }
+            });
+
+            // ================================================================
+            // CARBON EMISSION FACTORS
+            // ================================================================
+            const EMISSION_FACTORS = {
+                dataPerMB: 1.5,
+                requestPer100: 0.8,
+                imagePer10: 0.5,
+                scriptPer10: 0.6,
+                fontPer10: 0.3,
+                thirdPartyPer10: 0.7
+            };
+
+            // ================================================================
+            // WEBSITE DATABASE
+            // ================================================================
+            const WEBSITE_DB = {
+                'example.com': {
+                    name: 'Example Domain',
+                    dataMB: 2.4,
+                    requests: 45,
+                    images: 8,
+                    scripts: 12,
+                    fonts: 4,
+                    thirdParty: 15,
+                    footprint: 6.8
+                },
+                'google.com': {
+                    name: 'Google',
+                    dataMB: 3.1,
+                    requests: 62,
+                    images: 5,
+                    scripts: 28,
+                    fonts: 6,
+                    thirdParty: 20,
+                    footprint: 9.2
+                },
+                'youtube.com': {
+                    name: 'YouTube',
+                    dataMB: 8.5,
+                    requests: 85,
+                    images: 12,
+                    scripts: 35,
+                    fonts: 8,
+                    thirdParty: 30,
+                    footprint: 18.5
+                },
+                'github.com': {
+                    name: 'GitHub',
+                    dataMB: 4.2,
+                    requests: 70,
+                    images: 10,
+                    scripts: 22,
+                    fonts: 5,
+                    thirdParty: 18,
+                    footprint: 11.3
+                },
+                'wikipedia.org': {
+                    name: 'Wikipedia',
+                    dataMB: 1.8,
+                    requests: 38,
+                    images: 6,
+                    scripts: 8,
+                    fonts: 3,
+                    thirdParty: 10,
+                    footprint: 4.5
+                },
+                'amazon.com': {
+                    name: 'Amazon',
+                    dataMB: 5.6,
+                    requests: 92,
+                    images: 18,
+                    scripts: 30,
+                    fonts: 7,
+                    thirdParty: 25,
+                    footprint: 15.8
+                },
+                'netflix.com': {
+                    name: 'Netflix',
+                    dataMB: 12.0,
+                    requests: 60,
+                    images: 4,
+                    scripts: 15,
+                    fonts: 3,
+                    thirdParty: 12,
+                    footprint: 22.5
+                },
+                'twitter.com': {
+                    name: 'Twitter / X',
+                    dataMB: 3.8,
+                    requests: 75,
+                    images: 14,
+                    scripts: 20,
+                    fonts: 5,
+                    thirdParty: 22,
+                    footprint: 10.2
+                },
+                'instagram.com': {
+                    name: 'Instagram',
+                    dataMB: 6.2,
+                    requests: 80,
+                    images: 22,
+                    scripts: 18,
+                    fonts: 4,
+                    thirdParty: 28,
+                    footprint: 14.8
+                },
+                'linkedin.com': {
+                    name: 'LinkedIn',
+                    dataMB: 3.5,
+                    requests: 55,
+                    images: 9,
+                    scripts: 16,
+                    fonts: 4,
+                    thirdParty: 14,
+                    footprint: 8.7
+                },
+                'reddit.com': {
+                    name: 'Reddit',
+                    dataMB: 4.0,
+                    requests: 65,
+                    images: 12,
+                    scripts: 18,
+                    fonts: 4,
+                    thirdParty: 16,
+                    footprint: 9.8
+                },
+                'stackoverflow.com': {
+                    name: 'Stack Overflow',
+                    dataMB: 2.8,
+                    requests: 48,
+                    images: 5,
+                    scripts: 14,
+                    fonts: 3,
+                    thirdParty: 12,
+                    footprint: 6.2
+                },
+                'nytimes.com': {
+                    name: 'The New York Times',
+                    dataMB: 5.0,
+                    requests: 78,
+                    images: 16,
+                    scripts: 25,
+                    fonts: 6,
+                    thirdParty: 20,
+                    footprint: 13.5
+                },
+                'bbc.com': {
+                    name: 'BBC',
+                    dataMB: 4.5,
+                    requests: 68,
+                    images: 14,
+                    scripts: 20,
+                    fonts: 5,
+                    thirdParty: 18,
+                    footprint: 11.0
+                },
+                'medium.com': {
+                    name: 'Medium',
+                    dataMB: 2.2,
+                    requests: 42,
+                    images: 6,
+                    scripts: 10,
+                    fonts: 3,
+                    thirdParty: 8,
+                    footprint: 5.2
+                }
+            };
+
+            // ================================================================
+            // HELPER FUNCTIONS
+            // ================================================================
+            function extractDomain(url) {
+                try {
+                    const urlObj = new URL(url);
+                    let hostname = urlObj.hostname;
+                    if (hostname.startsWith('www.')) {
+                        hostname = hostname.substring(4);
+                    }
+                    return hostname.toLowerCase();
+                } catch (_) {
+                    return null;
+                }
+            }
+
+            function analyseWebsite(domain) {
+                if (WEBSITE_DB[domain]) {
+                    return { ...WEBSITE_DB[domain] };
+                }
+
+                const hash = domain.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                const seed = (hash % 100) / 100;
+
+                const dataMB = 1.5 + (seed * 10);
+                const requests = 30 + Math.floor(seed * 70);
+                const images = 3 + Math.floor(seed * 20);
+                const scripts = 5 + Math.floor(seed * 30);
+                const fonts = 1 + Math.floor(seed * 8);
+                const thirdParty = 5 + Math.floor(seed * 25);
+
+                const footprint =
+                    dataMB * EMISSION_FACTORS.dataPerMB +
+                    (requests / 100) * EMISSION_FACTORS.requestPer100 +
+                    (images / 10) * EMISSION_FACTORS.imagePer10 +
+                    (scripts / 10) * EMISSION_FACTORS.scriptPer10 +
+                    (fonts / 10) * EMISSION_FACTORS.fontPer10 +
+                    (thirdParty / 10) * EMISSION_FACTORS.thirdPartyPer10;
+
+                return {
+                    name: domain.charAt(0).toUpperCase() + domain.slice(1),
+                    dataMB: Math.round(dataMB * 10) / 10,
+                    requests: Math.round(requests),
+                    images: Math.round(images),
+                    scripts: Math.round(scripts),
+                    fonts: Math.round(fonts),
+                    thirdParty: Math.round(thirdParty),
+                    footprint: Math.round(footprint * 10) / 10
+                };
+            }
+
+            function classifyFootprint(footprint) {
+                if (footprint < 5) return { label: 'Low', class: 'low', emoji: '🟢' };
+                if (footprint < 12) return { label: 'Medium', class: 'medium', emoji: '🟡' };
+                return { label: 'High', class: 'high', emoji: '🔴' };
+            }
+
+            function treesEquivalent(footprintGrams) {
+                const trees = footprintGrams / 54.8;
+                return Math.round(trees * 100) / 100;
+            }
+
+            // ================================================================
+            // SUGGESTION ENGINE
+            // ================================================================
+            function generateSuggestions(data) {
+                const suggestions = [];
+                const { dataMB, requests, images, scripts, fonts, thirdParty, footprint } = data;
+
+                // Data Transfer
+                if (dataMB > 8) {
+                    suggestions.push({
+                        id: 'data-1',
+                        icon: '📦',
+                        title: 'Reduce page weight dramatically',
+                        description: `Your page transfers ${dataMB} MB per visit — this is very high. Implement aggressive optimisation: compress images, minify code, use lazy loading, and consider AMP or a lightweight framework.`,
+                        category: 'data',
+                        impact: 'high',
+                        effort: 'hard',
+                        impactScore: 95
+                    });
+                } else if (dataMB > 5) {
+                    suggestions.push({
+                        id: 'data-2',
+                        icon: '📦',
+                        title: 'Optimise page size',
+                        description: `At ${dataMB} MB, your page is larger than ideal. Compress images with WebP format, enable Gzip/Brotli compression, and remove unused CSS/JS to reduce size.`,
+                        category: 'data',
+                        impact: 'high',
+                        effort: 'medium',
+                        impactScore: 80
+                    });
+                } else if (dataMB > 3) {
+                    suggestions.push({
+                        id: 'data-3',
+                        icon: '📦',
+                        title: 'Fine-tune assets',
+                        description: `Your page is ${dataMB} MB — good, but could be better. Review fonts and use system fonts where possible, and ensure all images are properly optimised.`,
+                        category: 'data',
+                        impact: 'medium',
+                        effort: 'easy',
+                        impactScore: 60
+                    });
+                } else {
+                    suggestions.push({
+                        id: 'data-4',
+                        icon: '✅',
+                        title: 'Excellent page size!',
+                        description: `Only ${dataMB} MB — you're setting a great example. Keep monitoring to ensure it stays this way.`,
+                        category: 'data',
+                        impact: 'low',
+                        effort: 'easy',
+                        impactScore: 20
+                    });
+                }
+
+                // HTTP Requests
+                if (requests > 70) {
+                    suggestions.push({
+                        id: 'req-1',
+                        icon: '📨',
+                        title: 'Reduce HTTP requests',
+                        description: `${requests} requests per visit is high. Combine CSS/JS files, use CSS sprites for icons, and consider using HTTP/2 multiplexing.`,
+                        category: 'requests',
+                        impact: 'high',
+                        effort: 'medium',
+                        impactScore: 85
+                    });
+                } else if (requests > 50) {
+                    suggestions.push({
+                        id: 'req-2',
+                        icon: '📨',
+                        title: 'Optimise request count',
+                        description: `${requests} requests — aim for under 50. Audit your assets and remove unnecessary files.`,
+                        category: 'requests',
+                        impact: 'medium',
+                        effort: 'medium',
+                        impactScore: 65
+                    });
+                } else {
+                    suggestions.push({
+                        id: 'req-3',
+                        icon: '✅',
+                        title: 'Good request count',
+                        description: `Only ${requests} requests — well optimised! Consider using preconnect for critical third-party domains.`,
+                        category: 'requests',
+                        impact: 'low',
+                        effort: 'easy',
+                        impactScore: 25
+                    });
+                }
+
+                // Images
+                if (images > 15) {
+                    suggestions.push({
+                        id: 'img-1',
+                        icon: '🖼️',
+                        title: 'Optimise images',
+                        description: `${images} images on the page. Use modern formats (WebP/AVIF), implement lazy loading, and ensure proper sizing with srcset.`,
+                        category: 'images',
+                        impact: 'high',
+                        effort: 'medium',
+                        impactScore: 90
+                    });
+                } else if (images > 8) {
+                    suggestions.push({
+                        id: 'img-2',
+                        icon: '🖼️',
+                        title: 'Review image usage',
+                        description: `${images} images — consider if all are necessary. Compress JPEGs/PNGs and use responsive images.`,
+                        category: 'images',
+                        impact: 'medium',
+                        effort: 'easy',
+                        impactScore: 55
+                    });
+                } else {
+                    suggestions.push({
+                        id: 'img-3',
+                        icon: '✅',
+                        title: 'Great image optimisation',
+                        description: `Only ${images} images — excellent! Ensure they're all optimised for web delivery.`,
+                        category: 'images',
+                        impact: 'low',
+                        effort: 'easy',
+                        impactScore: 15
+                    });
+                }
+
+                // Scripts
+                if (scripts > 25) {
+                    suggestions.push({
+                        id: 'js-1',
+                        icon: '📜',
+                        title: 'Reduce JavaScript footprint',
+                        description: `${scripts} scripts — this can impact performance and emissions. Defer non-critical JS, use async loading, and remove unused dependencies.`,
+                        category: 'scripts',
+                        impact: 'high',
+                        effort: 'hard',
+                        impactScore: 85
+                    });
+                } else if (scripts > 15) {
+                    suggestions.push({
+                        id: 'js-2',
+                        icon: '📜',
+                        title: 'Optimise JavaScript',
+                        description: `${scripts} scripts — review for duplicates, consider code splitting, and ensure you're using tree-shaking.`,
+                        category: 'scripts',
+                        impact: 'medium',
+                        effort: 'medium',
+                        impactScore: 60
+                    });
+                } else {
+                    suggestions.push({
+                        id: 'js-3',
+                        icon: '✅',
+                        title: 'Lightweight JavaScript',
+                        description: `Only ${scripts} scripts — keep up the good work! Consider using vanilla JS where possible.`,
+                        category: 'scripts',
+                        impact: 'low',
+                        effort: 'easy',
+                        impactScore: 20
+                    });
+                }
+
+                // Fonts
+                if (fonts > 5) {
+                    suggestions.push({
+                        id: 'font-1',
+                        icon: '🔤',
+                        title: 'Optimise web fonts',
+                        description: `${fonts} font files — use system fonts as fallback, subset your fonts, and use font-display: swap.`,
+                        category: 'fonts',
+                        impact: 'medium',
+                        effort: 'easy',
+                        impactScore: 50
+                    });
+                } else {
+                    suggestions.push({
+                        id: 'font-2',
+                        icon: '✅',
+                        title: 'Good font usage',
+                        description: `${fonts} fonts — efficient. Consider using variable fonts for even better performance.`,
+                        category: 'fonts',
+                        impact: 'low',
+                        effort: 'easy',
+                        impactScore: 15
+                    });
+                }
+
+                // Third-party
+                if (thirdParty > 20) {
+                    suggestions.push({
+                        id: '3p-1',
+                        icon: '🔗',
+                        title: 'Audit third-party resources',
+                        description: `${thirdParty} third-party requests — each adds weight and privacy concerns. Remove unnecessary widgets, trackers, and scripts.`,
+                        category: 'thirdparty',
+                        impact: 'high',
+                        effort: 'medium',
+                        impactScore: 80
+                    });
+                } else if (thirdParty > 10) {
+                    suggestions.push({
+                        id: '3p-2',
+                        icon: '🔗',
+                        title: 'Review third-party usage',
+                        description: `${thirdParty} third-party requests — consider consolidating or replacing with self-hosted alternatives.`,
+                        category: 'thirdparty',
+                        impact: 'medium',
+                        effort: 'easy',
+                        impactScore: 55
+                    });
+                } else {
+                    suggestions.push({
+                        id: '3p-3',
+                        icon: '✅',
+                        title: 'Minimal third-party usage',
+                        description: `Only ${thirdParty} third-party requests — excellent for both performance and privacy.`,
+                        category: 'thirdparty',
+                        impact: 'low',
+                        effort: 'easy',
+                        impactScore: 15
+                    });
+                }
+
+                // ----- Overall recommendations -----
+                const category = classifyFootprint(footprint);
+                if (category.label === 'High') {
+                    suggestions.unshift({
+                        id: 'overall-1',
+                        icon: '🚨',
+                        title: 'High overall footprint — take action!',
+                        description: `Your website emits ${footprint}g CO₂ per visit. Focus on high-impact areas: data transfer, images, and third-party scripts to see the biggest reduction.`,
+                        category: 'overall',
+                        impact: 'high',
+                        effort: 'medium',
+                        impactScore: 100
+                    });
+                } else if (category.label === 'Medium') {
+                    suggestions.unshift({
+                        id: 'overall-2',
+                        icon: '💡',
+                        title: 'Good, but could be better',
+                        description: `At ${footprint}g CO₂ per visit, small optimisations can make a big difference. Target your top two highest-impact areas first.`,
+                        category: 'overall',
+                        impact: 'medium',
+                        effort: 'easy',
+                        impactScore: 70
+                    });
+                } else {
+                    suggestions.unshift({
+                        id: 'overall-3',
+                        icon: '🌟',
+                        title: 'Excellent carbon footprint!',
+                        description: `At just ${footprint}g CO₂ per visit, you're setting a great example. Maintain these standards and inspire others to follow.`,
+                        category: 'overall',
+                        impact: 'low',
+                        effort: 'easy',
+                        impactScore: 30
+                    });
+                }
+
+                return suggestions;
+            }
+
+            // ================================================================
+            // RENDER FUNCTIONS
+            // ================================================================
+            function renderSuggestions(suggestions, filter) {
+                currentSuggestions = suggestions;
+                currentFilter = filter;
+
+                let filtered = suggestions;
+                if (filter !== 'all') {
+                    filtered = suggestions.filter(s => s.impact === filter);
+                }
+
+                // Update count
+                suggestionCount.textContent = `${filtered.length} suggestions`;
+
+                if (filtered.length === 0) {
+                    suggestionList.innerHTML = `
+                        <div class="suggestion-item">
+                            <span class="sug-icon" aria-hidden="true">🔍</span>
+                            <div class="sug-content">
+                                <div class="sug-title">No suggestions for this filter</div>
+                                <div class="sug-description">Try selecting a different filter to see more recommendations.</div>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                suggestionList.innerHTML = filtered.map(s => `
+                    <div class="suggestion-item" data-id="${s.id}" data-impact="${s.impact}">
+                        <span class="sug-icon" aria-hidden="true">${s.icon}</span>
+                        <div class="sug-content">
+                            <div class="sug-title">${s.title}</div>
+                            <div class="sug-description">${s.description}</div>
+                            <div class="sug-meta">
+                                <span class="sug-tag ${s.impact}-impact">${s.impact === 'high' ? '🔴' : s.impact === 'medium' ? '🟡' : '🟢'} ${s.impact} impact</span>
+                                <span class="sug-tag ${s.effort}">${s.effort === 'easy' ? '✅' : s.effort === 'medium' ? '⏱️' : '🔧'} ${s.effort} effort</span>
+                                <span class="sug-tag category">📂 ${s.category}</span>
+                            </div>
+                            <div class="sug-impact-bar">
+                                <div class="impact-fill ${s.impact}" style="width: ${s.impactScore}%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            function displayResults(domain, data) {
+                const category = classifyFootprint(data.footprint);
+
+                faviconDisplay.textContent = '🌐';
+                siteName.textContent = data.name;
+                siteUrl.textContent = domain;
+
+                categoryBadge.textContent = `${category.emoji} ${category.label}`;
+                categoryBadge.className = `emission-badge ${category.class}`;
+
+                totalEmissionsEl.innerHTML = `${data.footprint} <span>g CO₂ / visit</span>`;
+
+                const trees = treesEquivalent(data.footprint);
+                comparisonText.innerHTML = `🌳 Equivalent to <strong>${trees}</strong> trees absorbing CO₂ for a day.`;
+
+                statData.textContent = `${data.dataMB} MB`;
+                statRequests.textContent = data.requests;
+                statImages.textContent = data.images;
+                statScripts.textContent = data.scripts;
+                statFonts.textContent = data.fonts;
+                statThirdParty.textContent = data.thirdParty;
+
+                const maxValues = { data: 15, requests: 100, images: 30, scripts: 40, fonts: 10, thirdParty: 40 };
+                barData.style.width = Math.min(100, (data.dataMB / maxValues.data) * 100) + '%';
+                barRequests.style.width = Math.min(100, (data.requests / maxValues.requests) * 100) + '%';
+                barImages.style.width = Math.min(100, (data.images / maxValues.images) * 100) + '%';
+                barScripts.style.width = Math.min(100, (data.scripts / maxValues.scripts) * 100) + '%';
+                barFonts.style.width = Math.min(100, (data.fonts / maxValues.fonts) * 100) + '%';
+                barThirdParty.style.width = Math.min(100, (data.thirdParty / maxValues.thirdParty) * 100) + '%';
+
+                // Generate and render suggestions
+                const suggestions = generateSuggestions(data);
+                renderSuggestions(suggestions, 'all');
+
+                resultsEl.classList.add('visible');
+            }
+
+            // ================================================================
+            // FILTER HANDLING
+            // ================================================================
+            filterContainer.addEventListener('click', function(e) {
+                const btn = e.target.closest('.filter-btn');
+                if (!btn) return;
+
+                // Update active state
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const filter = btn.dataset.filter;
+                renderSuggestions(currentSuggestions, filter);
+            });
+
+            // ================================================================
+            // MAIN ANALYSIS
+            // ================================================================
+            function performAnalysis() {
+                resultsEl.classList.remove('visible');
+                errorMsg.classList.remove('visible');
+
+                let url = urlInput.value.trim();
+                if (!url) {
+                    showError('Please enter a website URL.');
+                    return;
+                }
+
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    url = 'https://' + url;
+                }
+
+                const domain = extractDomain(url);
+                if (!domain) {
+                    showError('Invalid URL. Please enter a valid website address.');
+                    return;
+                }
+
+                analyzeBtn.disabled = true;
+                analyzeBtn.innerHTML = '<span class="spinner"></span> Analysing...';
+
+                setTimeout(() => {
+                    try {
+                        const data = analyseWebsite(domain);
+                        displayResults(domain, data);
+                    } catch (err) {
+                        showError('Error analysing website. Please try again.');
+                        console.error(err);
+                    } finally {
+                        analyzeBtn.disabled = false;
+                        analyzeBtn.innerHTML = '<span aria-hidden="true">🔍</span> Analyse';
+                    }
+                }, 800);
+            }
+
+            function showError(msg) {
+                errorText.textContent = msg;
+                errorMsg.classList.add('visible');
+                resultsEl.classList.remove('visible');
+            }
+
+            function resetAll() {
+                urlInput.value = '';
+                resultsEl.classList.remove('visible');
+                errorMsg.classList.remove('visible');
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = '<span aria-hidden="true">🔍</span> Analyse';
+                suggestionList.innerHTML = `
+                    <div class="suggestion-item">
+                        <span class="sug-icon" aria-hidden="true">🌱</span>
+                        <div class="sug-content">
+                            <div class="sug-title">Analyse a website to get suggestions</div>
+                            <div class="sug-description">Enter a URL above and click Analyse to receive personalised recommendations.</div>
+                        </div>
+                    </div>
+                `;
+                suggestionCount.textContent = '0 suggestions';
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('[data-filter="all"]')?.classList.add('active');
+            }
+
+            // ================================================================
+            // EVENT LISTENERS
+            // ================================================================
+            analyzeBtn.addEventListener('click', performAnalysis);
+
+            urlInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    performAnalysis();
+                }
+            });
+
+            resetBtn.addEventListener('click', resetAll);
+
+            // Auto-analyse on load
+            window.addEventListener('DOMContentLoaded', () => {
+                setTimeout(performAnalysis, 500);
+            });
+
+        })();
+    </script>
+
+</body>
+</html>
